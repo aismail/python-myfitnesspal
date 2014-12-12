@@ -125,7 +125,7 @@ class Client(MFPBase):
 
         return nutrition
 
-    def _get_meals(self, document):
+    def _get_meals(self, document, entry_filter):
         meals = []
         fields = None
         meal_headers = document.xpath("//tr[@class='meal_header']")
@@ -167,12 +167,15 @@ class Client(MFPBase):
                         value
                     )
 
-                entries.append(
-                    Entry(
-                        name,
-                        nutrition,
-                    )
+                entry = Entry(
+                    name,
+                    nutrition,
                 )
+
+                # Only add the entry if it passes the filter. By default, all
+                # entries pass the filter is no explicit filter is specified.
+                if entry_filter(entry):
+                    entries.append(entry)
 
             meals.append(
                 Meal(
@@ -205,7 +208,8 @@ class Client(MFPBase):
             )
         )
 
-        meals = self._get_meals(document)
+        entry_filter = kwargs.get('entry_filter', lambda entry: True)
+        meals = self._get_meals(document, entry_filter)
         goals = self._get_goals(document)
 
         day = Day(
